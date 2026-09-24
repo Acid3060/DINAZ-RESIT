@@ -1,0 +1,573 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Generator Resit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .input-box { border: 1px solid #000; padding: 8px 10px; width: 100%; outline: none; border-radius: 4px; font-size: 14px; }
+        .input-box:focus { border-color: #2563eb; background-color: #f0fdf4; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+        .font-dotmatrix { font-family: 'DotGothic16', sans-serif; letter-spacing: 2px; }
+        
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .item-grid {
+            display: grid;
+            grid-template-columns: minmax(100px, 1fr) 45px 85px 95px 30px;
+            gap: 6px;
+            align-items: center;
+        }
+        
+        @media (max-width: 450px) {
+            .input-box { padding: 6px 2px; font-size: 12px; }
+            .item-grid { grid-template-columns: minmax(70px, 1fr) 35px 75px 80px 20px; gap: 4px;}
+            .currency-wrap .rm-label { padding-left: 2px; font-size: 10px; }
+        }
+
+        .currency-wrap { position: relative; display: flex; align-items: center; border: 1px solid #000; border-radius: 4px; background: #fff;}
+        .currency-wrap:focus-within { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); background-color: #f0fdf4;}
+        .currency-wrap .rm-label { padding-left: 6px; font-size: 12px; font-weight: 600; color: #555; pointer-events: none;}
+        .currency-wrap input { border: none; padding-left: 2px; background: transparent; box-shadow: none !important;}
+        .currency-wrap input:focus { background-color: transparent;}
+        .currency-wrap.readonly-wrap { background: #e5e7eb; border-color: #9ca3af;}
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-2 sm:p-5 flex flex-col lg:flex-row gap-4 sm:gap-8 overflow-x-hidden">
+
+    <img id="bg-img" src="resit_background.jpg" style="display:none;" alt="Background">
+
+    <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50 px-4">
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl text-center max-w-sm w-full transform transition-all">
+            <div class="text-red-500 text-6xl mb-4">⚠️</div>
+            <h3 class="text-xl sm:text-2xl font-bold mb-2 text-gray-800">MAKLUMAT TIDAK LENGKAP!</h3>
+            <p class="text-gray-600 mb-6 text-sm sm:text-base">Sila isikan semua maklumat pelanggan, venue, dan pastikan ada sekurang-kurangnya 1 item yang mempunyai <b>Nama</b>, <b>Kuantiti</b>, dan <b>Harga</b> yang sah.</p>
+            <button onclick="closeModal()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 w-full shadow-md active:scale-95 transition-transform">
+                OK, FAHAM
+            </button>
+        </div>
+    </div>
+
+    <!-- KIRI: FORM INPUT -->
+    <div class="bg-white p-3 sm:p-6 rounded-xl shadow-lg w-full lg:w-1/2 max-w-2xl relative">
+        <button onclick="resetForm()" class="absolute top-3 right-3 bg-red-100 text-red-600 px-3 py-1 rounded-md text-xs sm:text-sm font-bold hover:bg-red-500 hover:text-white transition-colors shadow-sm">
+            Reset Borang
+        </button>
+
+        <h2 class="text-xl sm:text-2xl font-bold mb-4 border-b pb-2">Borang Resit</h2>
+        
+        <div class="mb-4 text-center mt-6 sm:mt-0">
+            <label class="font-semibold mr-2 text-sm sm:text-lg uppercase">RECEIPT NO:</label>
+            <span id="display-receipt-no" class="font-dotmatrix text-xl sm:text-2xl font-bold text-gray-800"></span>
+        </div>
+
+        <hr class="border-black border-dashed mb-4">
+
+        <form id="resit-form">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block mb-1 uppercase text-[10px] sm:text-xs font-bold">CUSTOMER:</label>
+                    <input type="text" id="customer" class="input-box" placeholder="Nama Pelanggan">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase text-[10px] sm:text-xs font-bold">RECEIPT DATE:</label>
+                    <input type="date" id="receipt-date" class="input-box">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase text-[10px] sm:text-xs font-bold">ADDRESS/VENUE:</label>
+                    <input type="text" id="address" class="input-box" placeholder="Lokasi Majlis">
+                </div>
+                <div>
+                    <label class="block mb-1 uppercase text-[10px] sm:text-xs font-bold">EVENT DATE:</label>
+                    <input type="date" id="event-date" class="input-box">
+                </div>
+            </div>
+
+            <div class="mb-4 bg-gray-50 p-2 rounded-lg border border-gray-200 w-full">
+                <div class="item-grid font-bold text-[9px] sm:text-[10px] border-b border-black pb-2 uppercase mb-2">
+                    <div class="pl-1">DETAILS</div>
+                    <div class="text-center">QTY</div>
+                    <div class="text-center text-[8px] sm:text-[10px]">UNIT PRICE</div>
+                    <div class="text-center">AMOUNT</div>
+                    <div></div>
+                </div>
+
+                <div id="items-container" class="space-y-2 w-full">
+                    <!-- #LABEL [HTML]: Struktur baru untuk simpan item dan nota dalam 1 group -->
+                    <div class="item-group border-b border-gray-200 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
+                        <div class="item-row item-grid">
+                            <input type="text" class="input-box detail" placeholder="Nama item...">
+                            <input type="number" min="1" max="999" class="input-box text-center qty" value="-">
+                            <div class="currency-wrap">
+                                <span class="rm-label">RM</span>
+                                <input type="number" min="0" step="0.01" class="input-box text-right price pr-1" placeholder="0.00">
+                            </div>
+                            <div class="currency-wrap readonly-wrap">
+                                <span class="rm-label">RM</span>
+                                <input type="text" class="input-box text-right amount font-semibold text-[11px] sm:text-sm pr-1" readonly placeholder="0.00">
+                            </div>
+                            <button type="button" onclick="removeRow(this)" class="text-red-500 font-bold text-lg sm:text-xl hover:bg-red-100 rounded flex items-center justify-center w-full h-full">&times;</button>
+                        </div>
+                        <!-- Container untuk nota -->
+                        <div class="notes-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- #LABEL [HTML]: Butang Note di sebelah Butang Item -->
+            <div class="flex gap-2 mb-6">
+                <button type="button" onclick="addRow()" class="bg-blue-500 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-blue-600 w-1/2 shadow active:scale-95 transition-transform">+ Tambah Item</button>
+                <button type="button" onclick="addNote()" class="bg-gray-600 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-gray-700 w-1/2 shadow active:scale-95 transition-transform">+ Tambah Note</button>
+            </div>
+
+            <div class="flex flex-col items-end gap-2 mb-6 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100">
+                <div class="flex items-center gap-2 w-full justify-end">
+                    <label class="w-20 sm:w-24 text-right uppercase font-bold text-[10px] sm:text-xs">TOTAL:</label>
+                    <div class="currency-wrap readonly-wrap w-28 sm:w-32 bg-white border-black">
+                        <span class="rm-label">RM</span>
+                        <input type="text" id="total" class="input-box text-right font-bold text-sm bg-transparent border-none" readonly value="0.00">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full justify-end">
+                    <label class="w-20 sm:w-24 text-right uppercase font-bold text-[10px] sm:text-xs">DEPOSIT:</label>
+                    <div class="currency-wrap w-28 sm:w-32">
+                        <span class="rm-label">RM</span>
+                        <input type="number" id="deposit" min="0" step="0.01" class="input-box text-right text-sm border-none" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full justify-end mt-1">
+                    <label class="w-20 sm:w-24 text-right uppercase font-bold text-[10px] sm:text-xs text-red-600">BALANCE:</label>
+                    <div class="currency-wrap readonly-wrap w-28 sm:w-32 border-red-500 bg-white">
+                        <span class="rm-label text-red-600">RM</span>
+                        <input type="text" id="balance" class="input-box text-right font-bold text-red-600 text-sm bg-transparent border-none" readonly value="0.00">
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <hr class="border-black border-dashed mb-6">
+
+        <button onclick="generateReceipt()" class="w-full bg-green-600 text-white py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-green-700 shadow-lg active:scale-95 transition-transform uppercase tracking-wider">
+            ⚙️ Generate Resit
+        </button>
+    </div>
+
+    <!-- KANAN: PREVIEW & DOWNLOAD -->
+    <div class="w-full lg:w-1/2 flex flex-col items-center">
+        <h2 class="text-lg sm:text-xl font-bold mb-4 bg-gray-800 text-white px-6 py-2 rounded-full shadow">Preview Resit</h2>
+        <div class="border-4 border-gray-300 shadow-2xl bg-white p-1 sm:p-2 w-full max-w-md relative">
+            <canvas id="receipt-canvas" width="2448" height="3264" class="w-full h-auto bg-white border border-gray-100"></canvas>
+        </div>
+        <button id="download-btn" onclick="downloadReceipt()" class="mt-6 bg-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-gray-800 shadow-xl w-full max-w-md active:scale-95 transition-transform hidden uppercase tracking-wider">
+            ⬇️ Download & Simpan
+        </button>
+    </div>
+
+    <script>
+        let currentReceiptNo = "";
+
+        function closeModal() {
+            document.getElementById('error-modal').classList.add('hidden');
+        }
+
+        function toTitleCase(str) {
+            return str.replace(
+                /\w\S*/g,
+                function(txt) {
+                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+                }
+            );
+        }
+
+        function getFormattedDateDDMMYY(dateString) {
+            if (!dateString) return "";
+            const [y, m, d] = dateString.split('-');
+            const shortYear = y.substring(2);
+            return `${d}${m}${shortYear}`;
+        }
+
+        function formatDateStandard(dateString) {
+            if(!dateString) return "";
+            const [y, m, d] = dateString.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function updateReceiptNo() {
+            const dateVal = document.getElementById('receipt-date').value;
+            const ddmmyy = getFormattedDateDDMMYY(dateVal);
+            if (!ddmmyy) return;
+
+            let seq = localStorage.getItem('dinaz_receipt_seq_' + ddmmyy);
+            seq = seq ? parseInt(seq) : 1;
+            
+            const paddedSeq = String(seq).padStart(2, '0');
+            currentReceiptNo = `${ddmmyy}/${paddedSeq}`;
+            document.getElementById('display-receipt-no').innerText = currentReceiptNo;
+        }
+
+        function setDefaultDates() {
+            document.getElementById('receipt-date').valueAsDate = new Date();
+            document.getElementById('event-date').valueAsDate = new Date();
+            updateReceiptNo();
+        }
+
+        setDefaultDates();
+        document.getElementById('receipt-date').addEventListener('change', updateReceiptNo);
+
+        const container = document.getElementById('items-container');
+        const depositInput = document.getElementById('deposit');
+
+        container.addEventListener('input', function(e) {
+            if(e.target.classList.contains('qty')) {
+                if (e.target.value.length > 3) {
+                    e.target.value = e.target.value.slice(0, 3);
+                }
+            }
+            if(e.target.classList.contains('qty') || e.target.classList.contains('price')) {
+                calculateTotals();
+            }
+        });
+
+        depositInput.addEventListener('input', calculateTotals);
+
+        function calculateTotals() {
+            let totalAmount = 0;
+            const groups = document.querySelectorAll('.item-group');
+            
+            groups.forEach(group => {
+                const qty = parseFloat(group.querySelector('.qty').value) || 0;
+                const price = parseFloat(group.querySelector('.price').value) || 0;
+                const amount = qty * price;
+                
+                group.querySelector('.amount').value = amount > 0 ? amount.toFixed(2) : '';
+                totalAmount += amount;
+            });
+
+            document.getElementById('total').value = totalAmount.toFixed(2);
+            
+            const deposit = parseFloat(depositInput.value) || 0;
+            const balance = totalAmount - deposit;
+            document.getElementById('balance').value = balance.toFixed(2);
+        }
+
+        function addRow() {
+            const rowHTML = `
+                <div class="item-group border-b border-gray-200 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
+                    <div class="item-row item-grid mt-2">
+                        <input type="text" class="input-box detail" placeholder="Nama item...">
+                        <input type="number" min="1" max="999" class="input-box text-center qty" value="-">
+                        <div class="currency-wrap">
+                            <span class="rm-label">RM</span>
+                            <input type="number" min="0" step="0.01" class="input-box text-right price pr-1" placeholder="0.00">
+                        </div>
+                        <div class="currency-wrap readonly-wrap">
+                            <span class="rm-label">RM</span>
+                            <input type="text" class="input-box text-right amount font-semibold text-[11px] sm:text-sm pr-1" readonly placeholder="0.00">
+                        </div>
+                        <button type="button" onclick="removeRow(this)" class="text-red-500 font-bold text-lg sm:text-xl hover:bg-red-100 rounded flex items-center justify-center w-full h-full">&times;</button>
+                    </div>
+                    <div class="notes-container"></div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', rowHTML);
+        }
+
+        // #LABEL [JS]: Fungsi Tambah Note. Dia akan lekat pada item yang paling latest (paling bawah)
+        function addNote() {
+            const groups = document.querySelectorAll('.item-group');
+            if(groups.length === 0) return;
+            
+            const lastGroup = groups[groups.length - 1]; // Ambil group item terakhir
+            const notesContainer = lastGroup.querySelector('.notes-container');
+            
+            const noteHTML = `
+                <div class="flex gap-2 items-center mt-1 pl-2 sm:pl-4">
+                    <span class="text-gray-400 font-bold ml-1">-</span>
+                    <input type="text" class="input-box note-input text-xs sm:text-sm py-1 bg-gray-50 flex-grow" placeholder="Nota tambahan (cth: saiz, warna)...">
+                    <button type="button" onclick="this.parentElement.remove()" class="text-red-500 font-bold px-2 hover:bg-red-100 rounded text-lg">&times;</button>
+                </div>
+            `;
+            notesContainer.insertAdjacentHTML('beforeend', noteHTML);
+        }
+
+        function removeRow(btn) {
+            if (document.querySelectorAll('.item-group').length > 1) {
+                // Remove the whole item group (including its notes)
+                btn.closest('.item-group').remove();
+                calculateTotals();
+            } else {
+                alert("Mesti ada sekurang-kurangnya 1 item.");
+            }
+        }
+
+        function resetForm() {
+            if(confirm("Anda pasti mahu reset borang ini?")) {
+                document.getElementById('resit-form').reset();
+                const groups = document.querySelectorAll('.item-group');
+                for (let i = 1; i < groups.length; i++) {
+                    groups[i].remove();
+                }
+                // Clear the notes of the first item
+                document.querySelector('.notes-container').innerHTML = '';
+                document.querySelector('.amount').value = ""; 
+                calculateTotals(); 
+                setDefaultDates(); 
+
+                const canvas = document.getElementById('receipt-canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('download-btn').classList.add('hidden');
+            }
+        }
+
+        function generateReceipt() {
+            const customer = document.getElementById('customer').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const rDate = document.getElementById('receipt-date').value;
+            const eDate = document.getElementById('event-date').value;
+
+            let hasValidItem = false;
+            const groups = document.querySelectorAll('.item-group');
+            groups.forEach(group => {
+                const detail = group.querySelector('.detail').value.trim();
+                const qty = parseFloat(group.querySelector('.qty').value) || 0;
+                const price = parseFloat(group.querySelector('.price').value) || 0;
+                
+                if (detail !== "" && qty > 0 && price > 0) {
+                    hasValidItem = true;
+                }
+            });
+
+            if (!customer || !address || !rDate || !eDate || !hasValidItem) {
+                document.getElementById('error-modal').classList.remove('hidden');
+                return; 
+            }
+
+            const canvas = document.getElementById('receipt-canvas');
+            const ctx = canvas.getContext('2d');
+            const bgImg = document.getElementById('bg-img');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (bgImg.complete && bgImg.naturalHeight !== 0) {
+                ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = "#ff0000";
+                ctx.lineWidth = 20;
+                ctx.strokeRect(100, 500, 2248, 2448);
+            }
+
+            // MARGIN KIRI & KANAN (Scale 2.04x)
+            const startX = 184;
+            const rightX = 2264;
+            
+            // Titik mula Y (Scale 2.04x)
+            let currentY = 938; 
+            
+            ctx.fillStyle = "#333333";
+            
+            document.fonts.ready.then(function() {
+                
+                // RECEIPT NO
+                ctx.font = "bold 65px 'DotGothic16', sans-serif"; 
+                ctx.textAlign = "center";
+                ctx.fillText(`RECEIPT NO: ${currentReceiptNo}`, canvas.width / 2, currentY);
+                
+                currentY += 61;
+                drawDashedLine(ctx, startX, currentY, rightX, currentY);
+
+                currentY += 92;
+                
+                const fCustomer = toTitleCase(customer);
+                const fAddress = toTitleCase(address);
+                const fRDate = formatDateStandard(rDate);
+                const fEDate = formatDateStandard(eDate);
+
+                ctx.font = "bold 53px Arial"; 
+                ctx.textAlign = "left";
+                ctx.fillText(`CUSTOMER:`, startX, currentY);
+                ctx.fillText(`ADDRESS / VENUE:`, startX, currentY + 82);
+                
+                ctx.font = "53px Arial";
+                ctx.fillText(fCustomer, startX + 550, currentY);
+                ctx.fillText(fAddress, startX + 550, currentY + 82);
+
+                ctx.font = "bold 53px Arial";
+                ctx.textAlign = "left";
+                ctx.fillText(`RECEIPT DATE:`, 1570, currentY); 
+                ctx.fillText(`EVENT DATE:`, 1570, currentY + 82);
+
+                ctx.font = "53px Arial";
+                ctx.textAlign = "right";
+                ctx.fillText(fRDate, rightX, currentY);
+                ctx.fillText(fEDate, rightX, currentY + 82);
+
+                currentY += 184;
+
+                // HEADER JADUAL
+                ctx.font = "bold 53px Arial";
+                ctx.textAlign = "left";
+                ctx.fillText("DETAIL", startX, currentY);
+                ctx.textAlign = "center";
+                ctx.fillText("QTY", 1346, currentY);
+                ctx.textAlign = "right";
+                ctx.fillText("UNIT PRICE", 1856, currentY); 
+                ctx.fillText("AMOUNT", rightX, currentY);
+
+                currentY += 41;
+                ctx.beginPath();
+                ctx.moveTo(startX, currentY);
+                ctx.lineTo(rightX, currentY);
+                ctx.lineWidth = 4; 
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+
+                currentY += 92; 
+                
+                // ==========================================
+                // #LABEL [JS]: LOOP ITEMS DAN NOTA
+                // ==========================================
+                groups.forEach(group => {
+                    const detailRaw = group.querySelector('.detail').value || "-";
+                    const detailItem = toTitleCase(detailRaw); 
+                    const qty = group.querySelector('.qty').value || "0";
+                    const price = group.querySelector('.price').value || "0.00";
+                    const amount = group.querySelector('.amount').value || "0.00";
+
+                    // 1. Tulis Item Utama
+                    ctx.font = "53px Arial"; 
+                    ctx.textAlign = "left";
+                    const shortDetail = detailItem.length > 45 ? detailItem.substring(0, 45) + "..." : detailItem;
+                    ctx.fillText(shortDetail, startX, currentY);
+                    
+                    ctx.textAlign = "center";
+                    ctx.fillText(qty, 1346, currentY);
+                    ctx.textAlign = "right";
+                    ctx.fillText(`RM ${parseFloat(price).toFixed(2)}`, 1856, currentY);
+                    ctx.fillText(`RM ${amount}`, rightX, currentY);
+
+                    // 2. Semak dan Tulis Nota (Jika Ada)
+                    const notes = group.querySelectorAll('.note-input');
+                    notes.forEach(note => {
+                        const noteText = note.value.trim();
+                        if (noteText) {
+                            currentY += 70; // #LABEL [JS]: Jarak ke bawah untuk setiap baris nota
+                            ctx.font = "48px Arial"; // #LABEL [JS]: Saiz font nota (kecil sikit dari 53px)
+                            ctx.textAlign = "left";
+                            
+                            // #LABEL [JS]: Indent nota ke dalam sikit (startX + 60)
+                            const noteLine = `- ${noteText}`;
+                            const shortNote = noteLine.length > 55 ? noteLine.substring(0, 55) + "..." : noteLine;
+                            ctx.fillText(shortNote, startX + 60, currentY);
+                        }
+                    });
+
+                    currentY += 92; // Jarak turun untuk next group item
+                });
+
+                // ==========================================
+                // #LABEL [JS]: KAWASAN TOTAL (BAWAH)
+                // ==========================================
+                let totalsY = 2774; 
+
+                // GARISAN MELINTANG PANJANG (Pemisah Atas Total)
+                ctx.beginPath();
+                let longLineY = totalsY - 92; 
+                ctx.moveTo(startX, longLineY); 
+                ctx.lineTo(rightX, longLineY); 
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+
+                const total = document.getElementById('total').value || "0.00";
+                const deposit = document.getElementById('deposit').value || "0.00";
+                const balance = document.getElementById('balance').value || "0.00";
+
+                // ALIGNMENT SERAGAM (Kiri Label)
+                let labelTotalX = 1550;
+
+                ctx.font = "bold 53px Arial";
+                
+                ctx.textAlign = "left";
+                ctx.fillText("TOTAL:", labelTotalX, totalsY);
+                ctx.textAlign = "right";
+                ctx.fillText(`RM ${total}`, rightX, totalsY);
+                
+                totalsY += 92;
+                ctx.textAlign = "left";
+                ctx.fillText("DEPOSIT:", labelTotalX, totalsY);
+                ctx.textAlign = "right";
+                ctx.fillText(`RM ${parseFloat(deposit).toFixed(2)}`, rightX, totalsY);
+                
+                totalsY += 51; 
+
+                // GARISAN PENDEK (Atas Balance)
+                ctx.beginPath();
+                ctx.moveTo(labelTotalX, totalsY); 
+                ctx.lineTo(rightX, totalsY); 
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+
+                totalsY += 82; 
+                
+                // BALANCE (GRAND TOTAL) 69px
+                ctx.font = "bold 69px Arial";
+                ctx.textAlign = "left";
+                ctx.fillText("BALANCE:", labelTotalX, totalsY);
+                ctx.textAlign = "right";
+                ctx.fillText(`RM ${balance}`, rightX, totalsY);
+
+                totalsY += 92;
+                // Garisan putus-putus bawah sekali (Penutup)
+                drawDashedLine(ctx, startX, totalsY, rightX, totalsY);
+
+                const downloadBtn = document.getElementById('download-btn');
+                downloadBtn.classList.remove('hidden');
+                
+                if(window.innerWidth < 1024) {
+                    setTimeout(() => {
+                        document.getElementById('receipt-canvas').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 300);
+                }
+            });
+        }
+
+        function drawDashedLine(ctx, x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.setLineDash([16, 16]); 
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.setLineDash([]); 
+        }
+
+        function downloadReceipt() {
+            const canvas = document.getElementById('receipt-canvas');
+            const image = canvas.toDataURL("image/jpeg", 1.0);
+            
+            const link = document.createElement('a');
+            link.download = `Resit_${currentReceiptNo.replace('/', '-')}.jpg`;
+            link.href = image;
+            link.click();
+
+            const dateVal = document.getElementById('receipt-date').value;
+            const ddmmyy = getFormattedDateDDMMYY(dateVal);
+            let seq = localStorage.getItem('dinaz_receipt_seq_' + ddmmyy);
+            seq = seq ? parseInt(seq) : 1;
+            
+            localStorage.setItem('dinaz_receipt_seq_' + ddmmyy, seq + 1);
+            updateReceiptNo();
+        }
+    </script>
+</body>
+</html>
