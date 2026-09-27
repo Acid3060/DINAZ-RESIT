@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ms">
 <head>
@@ -354,6 +353,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Periksa jika gambar betul-betul wujud
             if (bgImg.complete && bgImg.naturalHeight !== 0) {
                 ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
             } else {
@@ -362,182 +362,178 @@
                 ctx.strokeStyle = "#ff0000";
                 ctx.lineWidth = 20;
                 ctx.strokeRect(100, 500, 2248, 2448);
+                // Tambahan: Alert di kanvas jika gambar tak jumpa di Vercel/GitHub
+                ctx.fillStyle = "#ff0000";
+                ctx.font = "bold 60px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("RALAT: GAMBAR BACKGROUND TAK JUMPA DI SERVER", canvas.width / 2, 700);
+                ctx.fillText("Sila check nama fail (huruf besar/kecil) di GitHub", canvas.width / 2, 800);
             }
 
-            // MARGIN KIRI & KANAN (Scale 2.04x)
             const startX = 184;
             const rightX = 2264;
-            
-            // Titik mula Y (Scale 2.04x)
             let currentY = 938; 
             
             ctx.fillStyle = "#333333";
             
-            document.fonts.ready.then(function() {
+            // =========================================================================
+            // #LABEL [BUGFIX]: Arahan document.fonts.ready telah dibuang sepenuhnya.
+            // Ini untuk memastikan skrip tak "sangkut" pada pengguna iPhone/Safari.
+            // Segala teks di bawah akan dilukis terus.
+            // =========================================================================
+            
+            // RECEIPT NO
+            ctx.font = "bold 65px 'DotGothic16', sans-serif"; 
+            ctx.textAlign = "center";
+            ctx.fillText(`RECEIPT NO: ${currentReceiptNo}`, canvas.width / 2, currentY);
+            
+            currentY += 61;
+            drawDashedLine(ctx, startX, currentY, rightX, currentY);
+
+            currentY += 92;
+            
+            const fCustomer = toTitleCase(customer);
+            const fAddress = toTitleCase(address);
+            const fRDate = formatDateStandard(rDate);
+            const fEDate = formatDateStandard(eDate);
+
+            ctx.font = "bold 53px Arial"; 
+            ctx.textAlign = "left";
+            ctx.fillText(`CUSTOMER:`, startX, currentY);
+            ctx.fillText(`ADDRESS / VENUE:`, startX, currentY + 82);
+            
+            ctx.font = "53px Arial";
+            ctx.fillText(fCustomer, startX + 550, currentY);
+            ctx.fillText(fAddress, startX + 550, currentY + 82);
+
+            ctx.font = "bold 53px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(`RECEIPT DATE:`, 1570, currentY); 
+            ctx.fillText(`EVENT DATE:`, 1570, currentY + 82);
+
+            ctx.font = "53px Arial";
+            ctx.textAlign = "right";
+            ctx.fillText(fRDate, rightX, currentY);
+            ctx.fillText(fEDate, rightX, currentY + 82);
+
+            currentY += 184;
+
+            // HEADER JADUAL
+            ctx.font = "bold 53px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText("DETAIL", startX, currentY);
+            ctx.textAlign = "center";
+            ctx.fillText("QTY", 1346, currentY);
+            ctx.textAlign = "right";
+            ctx.fillText("UNIT PRICE", 1856, currentY); 
+            ctx.fillText("AMOUNT", rightX, currentY);
+
+            currentY += 41;
+            ctx.beginPath();
+            ctx.moveTo(startX, currentY);
+            ctx.lineTo(rightX, currentY);
+            ctx.lineWidth = 4; 
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+
+            currentY += 92; 
+            
+            // LOOP ITEMS DAN NOTA
+            groups.forEach(group => {
+                const detailRaw = group.querySelector('.detail').value || "-";
+                const detailItem = toTitleCase(detailRaw); 
+                const qty = group.querySelector('.qty').value || "0";
+                const price = group.querySelector('.price').value || "0.00";
+                const amount = group.querySelector('.amount').value || "0.00";
+
+                // 1. Tulis Item Utama
+                ctx.font = "53px Arial"; 
+                ctx.textAlign = "left";
+                const shortDetail = detailItem.length > 45 ? detailItem.substring(0, 45) + "..." : detailItem;
+                ctx.fillText(shortDetail, startX, currentY);
                 
-                // RECEIPT NO
-                ctx.font = "bold 65px 'DotGothic16', sans-serif"; 
                 ctx.textAlign = "center";
-                ctx.fillText(`RECEIPT NO: ${currentReceiptNo}`, canvas.width / 2, currentY);
-                
-                currentY += 61;
-                drawDashedLine(ctx, startX, currentY, rightX, currentY);
-
-                currentY += 92;
-                
-                const fCustomer = toTitleCase(customer);
-                const fAddress = toTitleCase(address);
-                const fRDate = formatDateStandard(rDate);
-                const fEDate = formatDateStandard(eDate);
-
-                ctx.font = "bold 53px Arial"; 
-                ctx.textAlign = "left";
-                ctx.fillText(`CUSTOMER:`, startX, currentY);
-                ctx.fillText(`ADDRESS / VENUE:`, startX, currentY + 82);
-                
-                ctx.font = "53px Arial";
-                ctx.fillText(fCustomer, startX + 550, currentY);
-                ctx.fillText(fAddress, startX + 550, currentY + 82);
-
-                ctx.font = "bold 53px Arial";
-                ctx.textAlign = "left";
-                ctx.fillText(`RECEIPT DATE:`, 1570, currentY); 
-                ctx.fillText(`EVENT DATE:`, 1570, currentY + 82);
-
-                ctx.font = "53px Arial";
+                ctx.fillText(qty, 1346, currentY);
                 ctx.textAlign = "right";
-                ctx.fillText(fRDate, rightX, currentY);
-                ctx.fillText(fEDate, rightX, currentY + 82);
+                ctx.fillText(`RM ${parseFloat(price).toFixed(2)}`, 1856, currentY);
+                ctx.fillText(`RM ${amount}`, rightX, currentY);
 
-                currentY += 184;
-
-                // HEADER JADUAL
-                ctx.font = "bold 53px Arial";
-                ctx.textAlign = "left";
-                ctx.fillText("DETAIL", startX, currentY);
-                ctx.textAlign = "center";
-                ctx.fillText("QTY", 1346, currentY);
-                ctx.textAlign = "right";
-                ctx.fillText("UNIT PRICE", 1856, currentY); 
-                ctx.fillText("AMOUNT", rightX, currentY);
-
-                currentY += 41;
-                ctx.beginPath();
-                ctx.moveTo(startX, currentY);
-                ctx.lineTo(rightX, currentY);
-                ctx.lineWidth = 4; 
-                ctx.strokeStyle = "#333";
-                ctx.stroke();
-
-                currentY += 92; 
-                
-                // ==========================================
-                // #LABEL [JS]: LOOP ITEMS DAN NOTA
-                // ==========================================
-                groups.forEach(group => {
-                    const detailRaw = group.querySelector('.detail').value || "-";
-                    const detailItem = toTitleCase(detailRaw); 
-                    const qty = group.querySelector('.qty').value || "0";
-                    const price = group.querySelector('.price').value || "0.00";
-                    const amount = group.querySelector('.amount').value || "0.00";
-
-                    // 1. Tulis Item Utama
-                    ctx.font = "53px Arial"; 
-                    ctx.textAlign = "left";
-                    const shortDetail = detailItem.length > 45 ? detailItem.substring(0, 45) + "..." : detailItem;
-                    ctx.fillText(shortDetail, startX, currentY);
-                    
-                    ctx.textAlign = "center";
-                    ctx.fillText(qty, 1346, currentY);
-                    ctx.textAlign = "right";
-                    ctx.fillText(`RM ${parseFloat(price).toFixed(2)}`, 1856, currentY);
-                    ctx.fillText(`RM ${amount}`, rightX, currentY);
-
-                    // 2. Semak dan Tulis Nota (Jika Ada)
-                    const notes = group.querySelectorAll('.note-input');
-                    notes.forEach(note => {
-                        const noteText = note.value.trim();
-                        if (noteText) {
-                            currentY += 70; // #LABEL [JS]: Jarak ke bawah untuk setiap baris nota
-                            ctx.font = "48px Arial"; // #LABEL [JS]: Saiz font nota (kecil sikit dari 53px)
-                            ctx.textAlign = "left";
-                            
-                            // #LABEL [JS]: Indent nota ke dalam sikit (startX + 60)
-                            const noteLine = `- ${noteText}`;
-                            const shortNote = noteLine.length > 55 ? noteLine.substring(0, 55) + "..." : noteLine;
-                            ctx.fillText(shortNote, startX + 60, currentY);
-                        }
-                    });
-
-                    currentY += 92; // Jarak turun untuk next group item
+                // 2. Semak dan Tulis Nota (Jika Ada)
+                const notes = group.querySelectorAll('.note-input');
+                notes.forEach(note => {
+                    const noteText = note.value.trim();
+                    if (noteText) {
+                        currentY += 70; 
+                        ctx.font = "48px Arial"; 
+                        ctx.textAlign = "left";
+                        
+                        const noteLine = `- ${noteText}`;
+                        const shortNote = noteLine.length > 55 ? noteLine.substring(0, 55) + "..." : noteLine;
+                        ctx.fillText(shortNote, startX + 60, currentY);
+                    }
                 });
 
-                // ==========================================
-                // #LABEL [JS]: KAWASAN TOTAL (BAWAH)
-                // ==========================================
-                let totalsY = 2774; 
-
-                // GARISAN MELINTANG PANJANG (Pemisah Atas Total)
-                ctx.beginPath();
-                let longLineY = totalsY - 92; 
-                ctx.moveTo(startX, longLineY); 
-                ctx.lineTo(rightX, longLineY); 
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = "#333";
-                ctx.stroke();
-
-                const total = document.getElementById('total').value || "0.00";
-                const deposit = document.getElementById('deposit').value || "0.00";
-                const balance = document.getElementById('balance').value || "0.00";
-
-                // ALIGNMENT SERAGAM (Kiri Label)
-                let labelTotalX = 1550;
-
-                ctx.font = "bold 53px Arial";
-                
-                ctx.textAlign = "left";
-                ctx.fillText("TOTAL:", labelTotalX, totalsY);
-                ctx.textAlign = "right";
-                ctx.fillText(`RM ${total}`, rightX, totalsY);
-                
-                totalsY += 92;
-                ctx.textAlign = "left";
-                ctx.fillText("DEPOSIT:", labelTotalX, totalsY);
-                ctx.textAlign = "right";
-                ctx.fillText(`RM ${parseFloat(deposit).toFixed(2)}`, rightX, totalsY);
-                
-                totalsY += 51; 
-
-                // GARISAN PENDEK (Atas Balance)
-                ctx.beginPath();
-                ctx.moveTo(labelTotalX, totalsY); 
-                ctx.lineTo(rightX, totalsY); 
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = "#333";
-                ctx.stroke();
-
-                totalsY += 82; 
-                
-                // BALANCE (GRAND TOTAL) 69px
-                ctx.font = "bold 69px Arial";
-                ctx.textAlign = "left";
-                ctx.fillText("BALANCE:", labelTotalX, totalsY);
-                ctx.textAlign = "right";
-                ctx.fillText(`RM ${balance}`, rightX, totalsY);
-
-                totalsY += 92;
-                // Garisan putus-putus bawah sekali (Penutup)
-                drawDashedLine(ctx, startX, totalsY, rightX, totalsY);
-
-                const downloadBtn = document.getElementById('download-btn');
-                downloadBtn.classList.remove('hidden');
-                
-                if(window.innerWidth < 1024) {
-                    setTimeout(() => {
-                        document.getElementById('receipt-canvas').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 300);
-                }
+                currentY += 92; 
             });
+
+            // KAWASAN TOTAL (BAWAH)
+            let totalsY = 2774; 
+
+            ctx.beginPath();
+            let longLineY = totalsY - 92; 
+            ctx.moveTo(startX, longLineY); 
+            ctx.lineTo(rightX, longLineY); 
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+
+            const total = document.getElementById('total').value || "0.00";
+            const deposit = document.getElementById('deposit').value || "0.00";
+            const balance = document.getElementById('balance').value || "0.00";
+
+            let labelTotalX = 1550;
+
+            ctx.font = "bold 53px Arial";
+            
+            ctx.textAlign = "left";
+            ctx.fillText("TOTAL:", labelTotalX, totalsY);
+            ctx.textAlign = "right";
+            ctx.fillText(`RM ${total}`, rightX, totalsY);
+            
+            totalsY += 92;
+            ctx.textAlign = "left";
+            ctx.fillText("DEPOSIT:", labelTotalX, totalsY);
+            ctx.textAlign = "right";
+            ctx.fillText(`RM ${parseFloat(deposit).toFixed(2)}`, rightX, totalsY);
+            
+            totalsY += 51; 
+
+            ctx.beginPath();
+            ctx.moveTo(labelTotalX, totalsY); 
+            ctx.lineTo(rightX, totalsY); 
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+
+            totalsY += 82; 
+            
+            ctx.font = "bold 69px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText("BALANCE:", labelTotalX, totalsY);
+            ctx.textAlign = "right";
+            ctx.fillText(`RM ${balance}`, rightX, totalsY);
+
+            totalsY += 92;
+            drawDashedLine(ctx, startX, totalsY, rightX, totalsY);
+
+            const downloadBtn = document.getElementById('download-btn');
+            downloadBtn.classList.remove('hidden');
+            
+            if(window.innerWidth < 1024) {
+                setTimeout(() => {
+                    document.getElementById('receipt-canvas').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 300);
+            }
         }
 
         function drawDashedLine(ctx, x1, y1, x2, y2) {
