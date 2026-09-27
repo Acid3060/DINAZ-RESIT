@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Generator Resit</title>
+    <title>Generator Resit Dinaz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
     <style>
@@ -97,7 +97,6 @@
                 </div>
 
                 <div id="items-container" class="space-y-2 w-full">
-                    <!-- #LABEL [HTML]: Struktur baru untuk simpan item dan nota dalam 1 group -->
                     <div class="item-group border-b border-gray-200 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
                         <div class="item-row item-grid">
                             <input type="text" class="input-box detail" placeholder="Nama item...">
@@ -112,13 +111,11 @@
                             </div>
                             <button type="button" onclick="removeRow(this)" class="text-red-500 font-bold text-lg sm:text-xl hover:bg-red-100 rounded flex items-center justify-center w-full h-full">&times;</button>
                         </div>
-                        <!-- Container untuk nota -->
                         <div class="notes-container"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- #LABEL [HTML]: Butang Note di sebelah Butang Item -->
             <div class="flex gap-2 mb-6">
                 <button type="button" onclick="addRow()" class="bg-blue-500 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-blue-600 w-1/2 shadow active:scale-95 transition-transform">+ Tambah Item</button>
                 <button type="button" onclick="addNote()" class="bg-gray-600 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-gray-700 w-1/2 shadow active:scale-95 transition-transform">+ Tambah Note</button>
@@ -276,12 +273,11 @@
             container.insertAdjacentHTML('beforeend', rowHTML);
         }
 
-        // #LABEL [JS]: Fungsi Tambah Note. Dia akan lekat pada item yang paling latest (paling bawah)
         function addNote() {
             const groups = document.querySelectorAll('.item-group');
             if(groups.length === 0) return;
             
-            const lastGroup = groups[groups.length - 1]; // Ambil group item terakhir
+            const lastGroup = groups[groups.length - 1];
             const notesContainer = lastGroup.querySelector('.notes-container');
             
             const noteHTML = `
@@ -296,7 +292,6 @@
 
         function removeRow(btn) {
             if (document.querySelectorAll('.item-group').length > 1) {
-                // Remove the whole item group (including its notes)
                 btn.closest('.item-group').remove();
                 calculateTotals();
             } else {
@@ -311,7 +306,6 @@
                 for (let i = 1; i < groups.length; i++) {
                     groups[i].remove();
                 }
-                // Clear the notes of the first item
                 document.querySelector('.notes-container').innerHTML = '';
                 document.querySelector('.amount').value = ""; 
                 calculateTotals(); 
@@ -353,7 +347,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Periksa jika gambar betul-betul wujud
+            // Draw background image if available, else white fallback
             if (bgImg.complete && bgImg.naturalHeight !== 0) {
                 ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
             } else {
@@ -362,12 +356,6 @@
                 ctx.strokeStyle = "#ff0000";
                 ctx.lineWidth = 20;
                 ctx.strokeRect(100, 500, 2248, 2448);
-                // Tambahan: Alert di kanvas jika gambar tak jumpa di Vercel/GitHub
-                ctx.fillStyle = "#ff0000";
-                ctx.font = "bold 60px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText("RALAT: GAMBAR BACKGROUND TAK JUMPA DI SERVER", canvas.width / 2, 700);
-                ctx.fillText("Sila check nama fail (huruf besar/kecil) di GitHub", canvas.width / 2, 800);
             }
 
             const startX = 184;
@@ -376,11 +364,11 @@
             
             ctx.fillStyle = "#333333";
             
-            // =========================================================================
-            // #LABEL [BUGFIX]: Arahan document.fonts.ready telah dibuang sepenuhnya.
-            // Ini untuk memastikan skrip tak "sangkut" pada pengguna iPhone/Safari.
-            // Segala teks di bawah akan dilukis terus.
-            // =========================================================================
+            /* =========================================================================
+             * BUGFIX VERCEL / IPHONE:
+             * Direct synchronous drawing without document.fonts.ready wrapper.
+             * Prevents iOS Safari from hanging on font promises.
+             * ========================================================================= */
             
             // RECEIPT NO
             ctx.font = "bold 65px 'DotGothic16', sans-serif"; 
@@ -438,7 +426,6 @@
 
             currentY += 92; 
             
-            // LOOP ITEMS DAN NOTA
             groups.forEach(group => {
                 const detailRaw = group.querySelector('.detail').value || "-";
                 const detailItem = toTitleCase(detailRaw); 
@@ -446,7 +433,7 @@
                 const price = group.querySelector('.price').value || "0.00";
                 const amount = group.querySelector('.amount').value || "0.00";
 
-                // 1. Tulis Item Utama
+                // 1. Item Utama
                 ctx.font = "53px Arial"; 
                 ctx.textAlign = "left";
                 const shortDetail = detailItem.length > 45 ? detailItem.substring(0, 45) + "..." : detailItem;
@@ -458,7 +445,7 @@
                 ctx.fillText(`RM ${parseFloat(price).toFixed(2)}`, 1856, currentY);
                 ctx.fillText(`RM ${amount}`, rightX, currentY);
 
-                // 2. Semak dan Tulis Nota (Jika Ada)
+                // 2. Semak dan Tulis Nota (Bullet List Indented)
                 const notes = group.querySelectorAll('.note-input');
                 notes.forEach(note => {
                     const noteText = note.value.trim();
@@ -476,7 +463,6 @@
                 currentY += 92; 
             });
 
-            // KAWASAN TOTAL (BAWAH)
             let totalsY = 2774; 
 
             ctx.beginPath();
