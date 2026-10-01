@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
+    <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#000000">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Generator Resit Dinaz</title>
@@ -35,39 +37,115 @@
         .currency-wrap input { border: none; padding-left: 2px; background: transparent; box-shadow: none !important;}
         .currency-wrap input:focus { background-color: transparent;}
         .currency-wrap.readonly-wrap { background: #e5e7eb; border-color: #9ca3af;}
+
+        /* Gaya Butang 3D dengan Outer Highlight Line & Drop Shadow */
+        .btn-3d {
+            border-style: solid;
+            border-width: 1px;
+            border-top-color: rgba(255, 255, 255, 0.4);
+            border-left-color: rgba(255, 255, 255, 0.3);
+            border-right-color: rgba(0, 0, 0, 0.2);
+            border-bottom-color: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.25), 0 6px 10px rgba(0, 0, 0, 0.15);
+            transition: all 0.1s ease;
+        }
+        .btn-3d:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 3D Progress Bar Styling */
+        .progress-3d-container {
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 3px;
+        }
+        .progress-3d-bar {
+            background: linear-gradient(180deg, #4ade80 0%, #16a34a 50%, #15803d 100%);
+            box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            transition: width 0.05s linear;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-2 sm:p-5 flex flex-col lg:flex-row gap-4 sm:gap-8 overflow-x-hidden">
+<body class="bg-gray-100 min-h-screen p-2 sm:p-5 flex justify-center items-start overflow-x-hidden">
+
+    <!-- 1. DUMMY LOADING SCREEN -->
+    <div id="loading-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-b from-emerald-800 via-emerald-600 to-green-700 p-6 text-white transition-opacity duration-300">
+        <div class="flex flex-col items-center max-w-xs w-full">
+            <img src="dinaz_logo.png" alt="Dinaz Logo" class="w-32 h-auto mb-8 drop-shadow-2xl animate-pulse" onerror="this.style.display='none'; document.getElementById('fallback-logo').classList.remove('hidden')">
+            <div id="fallback-logo" class="hidden text-3xl font-black mb-8 tracking-widest text-yellow-300 drop-shadow">DINAZ</div>
+            
+            <!-- 3D Bar Style -->
+            <div class="progress-3d-container w-full h-7 mb-3">
+                <div id="progress-bar" class="progress-3d-bar h-full w-0"></div>
+            </div>
+            
+            <div class="text-sm font-bold tracking-wider drop-shadow"><span id="progress-text">0</span>%</div>
+        </div>
+    </div>
 
     <img id="bg-img" src="resit_background.jpg" style="display:none;" alt="Background">
 
+    <!-- MODAL ERROR -->
     <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50 px-4">
         <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl text-center max-w-sm w-full transform transition-all">
             <div class="text-red-500 text-6xl mb-4">⚠️</div>
             <h3 class="text-xl sm:text-2xl font-bold mb-2 text-gray-800">MAKLUMAT TIDAK LENGKAP!</h3>
             <p class="text-gray-600 mb-6 text-sm sm:text-base">Sila isikan semua maklumat pelanggan, venue, dan pastikan ada sekurang-kurangnya 1 item yang mempunyai <b>Nama</b>, <b>Kuantiti</b>, dan <b>Harga</b> yang sah.</p>
-            <button onclick="closeModal()" class="bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 w-full shadow-md active:scale-95 transition-transform">
+            <button onclick="closeModal()" class="btn-3d bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 w-full">
                 OK, FAHAM
             </button>
         </div>
     </div>
 
-    <!-- KIRI: FORM INPUT -->
-    <div class="bg-white p-3 sm:p-6 rounded-xl shadow-lg w-full lg:w-1/2 max-w-2xl relative">
-        <button onclick="resetForm()" class="absolute top-3 right-3 bg-red-100 text-red-600 px-3 py-1 rounded-md text-xs sm:text-sm font-bold hover:bg-red-500 hover:text-white transition-colors shadow-sm">
-            Reset Borang
-        </button>
+    <!-- POPUP MODAL RESIT (DOWNLOAD & KEMBALI) -->
+    <div id="receipt-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white p-3 sm:p-5 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center my-auto">
+            <div class="flex justify-between items-center w-full mb-3 pb-2 border-b">
+                <h3 class="text-base sm:text-lg font-bold text-gray-800">Hasil Resit</h3>
+                <button onclick="closeReceiptModal()" class="text-gray-500 hover:text-gray-800 font-bold text-xl px-2">&times;</button>
+            </div>
+            
+            <div class="border-2 border-gray-300 shadow-lg bg-white p-1 w-full relative mb-4">
+                <canvas id="receipt-canvas" width="2448" height="3264" class="w-full h-auto bg-white border border-gray-100"></canvas>
+            </div>
 
-        <h2 class="text-xl sm:text-2xl font-bold mb-4 border-b pb-2">Borang Resit</h2>
+            <div class="flex flex-col sm:flex-row gap-2 w-full">
+                <button onclick="closeReceiptModal()" class="btn-3d w-full sm:w-1/2 bg-gray-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-gray-700 uppercase tracking-wider order-2 sm:order-1">
+                    ⬅️ Kembali
+                </button>
+                <button id="download-btn" onclick="downloadReceipt()" class="btn-3d w-full sm:w-1/2 bg-black text-white py-3 rounded-xl font-bold text-sm hover:bg-gray-800 uppercase tracking-wider order-1 sm:order-2">
+                    ⬇️️ Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BORANG RESIT UTAMA -->
+    <div class="bg-white p-3 sm:p-6 rounded-xl shadow-lg w-full max-w-2xl relative">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="text-xl sm:text-2xl font-bold">Borang Resit</h2>
+            <div class="flex gap-2">
+                <button onclick="resetForm()" class="btn-3d bg-red-100 text-red-600 px-3 py-1.5 rounded-md text-xs sm:text-sm font-bold hover:bg-red-500 hover:text-white">
+                    Reset Borang
+                </button>
+                <button onclick="closeApp()" class="btn-3d bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-xs sm:text-sm font-bold hover:bg-gray-400">
+                    ❌ Tutup App
+                </button>
+            </div>
+        </div>
         
-        <div class="mb-4 text-center mt-6 sm:mt-0">
+        <div class="mb-4 text-center mt-2">
             <label class="font-semibold mr-2 text-sm sm:text-lg uppercase">RECEIPT NO:</label>
             <span id="display-receipt-no" class="font-dotmatrix text-xl sm:text-2xl font-bold text-gray-800"></span>
         </div>
 
         <hr class="border-black border-dashed mb-4">
 
-        <form id="resit-form">
+        <form id="resit-form" onsubmit="event.preventDefault();">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div>
                     <label class="block mb-1 uppercase text-[10px] sm:text-xs font-bold">CUSTOMER:</label>
@@ -117,8 +195,8 @@
             </div>
 
             <div class="flex gap-2 mb-6">
-                <button type="button" onclick="addRow()" class="bg-blue-500 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-blue-600 w-1/2 shadow active:scale-95 transition-transform">+ Tambah Item</button>
-                <button type="button" onclick="addNote()" class="bg-gray-600 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-gray-700 w-1/2 shadow active:scale-95 transition-transform">+ Tambah Note</button>
+                <button type="button" onclick="addRow()" class="btn-3d bg-blue-500 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-blue-600 w-1/2">+ Tambah Item</button>
+                <button type="button" onclick="addNote()" class="btn-3d bg-gray-600 text-white px-4 py-2 rounded-md text-xs sm:text-sm font-bold hover:bg-gray-700 w-1/2">+ Tambah Note</button>
             </div>
 
             <div class="flex flex-col items-end gap-2 mb-6 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100">
@@ -148,27 +226,58 @@
 
         <hr class="border-black border-dashed mb-6">
 
-        <button onclick="generateReceipt()" class="w-full bg-green-600 text-white py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-green-700 shadow-lg active:scale-95 transition-transform uppercase tracking-wider">
+        <button onclick="generateReceipt()" class="btn-3d w-full bg-green-600 text-white py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-green-700 uppercase tracking-wider">
             ⚙️ Generate Resit
-        </button>
-    </div>
-
-    <!-- KANAN: PREVIEW & DOWNLOAD -->
-    <div class="w-full lg:w-1/2 flex flex-col items-center">
-        <h2 class="text-lg sm:text-xl font-bold mb-4 bg-gray-800 text-white px-6 py-2 rounded-full shadow">Preview Resit</h2>
-        <div class="border-4 border-gray-300 shadow-2xl bg-white p-1 sm:p-2 w-full max-w-md relative">
-            <canvas id="receipt-canvas" width="2448" height="3264" class="w-full h-auto bg-white border border-gray-100"></canvas>
-        </div>
-        <button id="download-btn" onclick="downloadReceipt()" class="mt-6 bg-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-gray-800 shadow-xl w-full max-w-md active:scale-95 transition-transform hidden uppercase tracking-wider">
-            ⬇️ Download & Simpan
         </button>
     </div>
 
     <script>
         let currentReceiptNo = "";
 
+        // 1. DUMMY LOADING SCREEN SCRIPT (1 Saat)
+        window.addEventListener('DOMContentLoaded', () => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            
+            let progress = 0;
+            const duration = 1000; // 1 saat
+            const intervalTime = 20;
+            const step = 100 / (duration / intervalTime);
+
+            const timer = setInterval(() => {
+                progress += step;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(timer);
+                    setTimeout(() => {
+                        loadingScreen.style.opacity = '0';
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                        }, 300);
+                    }, 100);
+                }
+                progressBar.style.width = progress + '%';
+                progressText.innerText = Math.floor(progress);
+            }, intervalTime);
+        });
+
         function closeModal() {
             document.getElementById('error-modal').classList.add('hidden');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receipt-modal').classList.add('hidden');
+        }
+
+        function closeApp() {
+            if (confirm("Adakah anda pasti mahu menutup aplikasi ini?")) {
+                window.close();
+                // Fallback sekiranya browser menyekat window.close()
+                setTimeout(() => {
+                    alert("Sila tutup tab ini dari pelayar (browser) anda.");
+                }, 300);
+            }
         }
 
         function toTitleCase(str) {
@@ -314,10 +423,10 @@
                 const canvas = document.getElementById('receipt-canvas');
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                document.getElementById('download-btn').classList.add('hidden');
             }
         }
 
+        // GENERATE RECEIPT & OPEN MODAL (IOS & ANDROID OPTIMISED)
         function generateReceipt() {
             const customer = document.getElementById('customer').value.trim();
             const address = document.getElementById('address').value.trim();
@@ -347,178 +456,173 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background image if available, else white fallback
-            if (bgImg.complete && bgImg.naturalHeight !== 0) {
-                ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = "#ffffff";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = "#ff0000";
-                ctx.lineWidth = 20;
-                ctx.strokeRect(100, 500, 2248, 2448);
-            }
+            // Lukis Resit (iOS & Android Safe)
+            const renderContent = () => {
+                if (bgImg.complete && bgImg.naturalHeight !== 0) {
+                    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+                } else {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = "#ff0000";
+                    ctx.lineWidth = 20;
+                    ctx.strokeRect(100, 500, 2248, 2448);
+                }
 
-            const startX = 184;
-            const rightX = 2264;
-            let currentY = 938; 
-            
-            ctx.fillStyle = "#333333";
-            
-            /* =========================================================================
-             * BUGFIX VERCEL / IPHONE:
-             * Direct synchronous drawing without document.fonts.ready wrapper.
-             * Prevents iOS Safari from hanging on font promises.
-             * ========================================================================= */
-            
-            // RECEIPT NO
-            ctx.font = "bold 65px 'DotGothic16', sans-serif"; 
-            ctx.textAlign = "center";
-            ctx.fillText(`RECEIPT NO: ${currentReceiptNo}`, canvas.width / 2, currentY);
-            
-            currentY += 61;
-            drawDashedLine(ctx, startX, currentY, rightX, currentY);
-
-            currentY += 92;
-            
-            const fCustomer = toTitleCase(customer);
-            const fAddress = toTitleCase(address);
-            const fRDate = formatDateStandard(rDate);
-            const fEDate = formatDateStandard(eDate);
-
-            ctx.font = "bold 53px Arial"; 
-            ctx.textAlign = "left";
-            ctx.fillText(`CUSTOMER:`, startX, currentY);
-            ctx.fillText(`ADDRESS / VENUE:`, startX, currentY + 82);
-            
-            ctx.font = "53px Arial";
-            ctx.fillText(fCustomer, startX + 550, currentY);
-            ctx.fillText(fAddress, startX + 550, currentY + 82);
-
-            ctx.font = "bold 53px Arial";
-            ctx.textAlign = "left";
-            ctx.fillText(`RECEIPT DATE:`, 1570, currentY); 
-            ctx.fillText(`EVENT DATE:`, 1570, currentY + 82);
-
-            ctx.font = "53px Arial";
-            ctx.textAlign = "right";
-            ctx.fillText(fRDate, rightX, currentY);
-            ctx.fillText(fEDate, rightX, currentY + 82);
-
-            currentY += 184;
-
-            // HEADER JADUAL
-            ctx.font = "bold 53px Arial";
-            ctx.textAlign = "left";
-            ctx.fillText("DETAIL", startX, currentY);
-            ctx.textAlign = "center";
-            ctx.fillText("QTY", 1346, currentY);
-            ctx.textAlign = "right";
-            ctx.fillText("UNIT PRICE", 1856, currentY); 
-            ctx.fillText("AMOUNT", rightX, currentY);
-
-            currentY += 41;
-            ctx.beginPath();
-            ctx.moveTo(startX, currentY);
-            ctx.lineTo(rightX, currentY);
-            ctx.lineWidth = 4; 
-            ctx.strokeStyle = "#333";
-            ctx.stroke();
-
-            currentY += 92; 
-            
-            groups.forEach(group => {
-                const detailRaw = group.querySelector('.detail').value || "-";
-                const detailItem = toTitleCase(detailRaw); 
-                const qty = group.querySelector('.qty').value || "0";
-                const price = group.querySelector('.price').value || "0.00";
-                const amount = group.querySelector('.amount').value || "0.00";
-
-                // 1. Item Utama
-                ctx.font = "53px Arial"; 
-                ctx.textAlign = "left";
-                const shortDetail = detailItem.length > 45 ? detailItem.substring(0, 45) + "..." : detailItem;
-                ctx.fillText(shortDetail, startX, currentY);
+                const startX = 184;
+                const rightX = 2264;
+                let currentY = 938; 
                 
+                ctx.fillStyle = "#333333";
+                
+                // RECEIPT NO
+                ctx.font = "bold 65px 'DotGothic16', sans-serif"; 
                 ctx.textAlign = "center";
-                ctx.fillText(qty, 1346, currentY);
-                ctx.textAlign = "right";
-                ctx.fillText(`RM ${parseFloat(price).toFixed(2)}`, 1856, currentY);
-                ctx.fillText(`RM ${amount}`, rightX, currentY);
+                ctx.fillText(`RECEIPT NO: ${currentReceiptNo}`, canvas.width / 2, currentY);
+                
+                currentY += 61;
+                drawDashedLine(ctx, startX, currentY, rightX, currentY);
 
-                // 2. Semak dan Tulis Nota (Bullet List Indented)
-                const notes = group.querySelectorAll('.note-input');
-                notes.forEach(note => {
-                    const noteText = note.value.trim();
-                    if (noteText) {
-                        currentY += 70; 
-                        ctx.font = "48px Arial"; 
-                        ctx.textAlign = "left";
-                        
-                        const noteLine = `- ${noteText}`;
-                        const shortNote = noteLine.length > 55 ? noteLine.substring(0, 55) + "..." : noteLine;
-                        ctx.fillText(shortNote, startX + 60, currentY);
-                    }
-                });
+                currentY += 92;
+                
+                const fCustomer = toTitleCase(customer);
+                const fAddress = toTitleCase(address);
+                const fRDate = formatDateStandard(rDate);
+                const fEDate = formatDateStandard(eDate);
+
+                ctx.font = "bold 53px Arial"; 
+                ctx.textAlign = "left";
+                ctx.fillText(`CUSTOMER:`, startX, currentY);
+                ctx.fillText(`ADDRESS / VENUE:`, startX, currentY + 82);
+                
+                ctx.font = "53px Arial";
+                ctx.fillText(fCustomer, startX + 550, currentY);
+                ctx.fillText(fAddress, startX + 550, currentY + 82);
+
+                ctx.font = "bold 53px Arial";
+                ctx.textAlign = "left";
+                ctx.fillText(`RECEIPT DATE:`, 1570, currentY); 
+                ctx.fillText(`EVENT DATE:`, 1570, currentY + 82);
+
+                ctx.font = "53px Arial";
+                ctx.textAlign = "right";
+                ctx.fillText(fRDate, rightX, currentY);
+                ctx.fillText(fEDate, rightX, currentY + 82);
+
+                currentY += 184;
+
+                // HEADER JADUAL
+                ctx.font = "bold 53px Arial";
+                ctx.textAlign = "left";
+                ctx.fillText("DETAIL", startX, currentY);
+                ctx.textAlign = "center";
+                ctx.fillText("QTY", 1346, currentY);
+                ctx.textAlign = "right";
+                ctx.fillText("UNIT PRICE", 1856, currentY); 
+                ctx.fillText("AMOUNT", rightX, currentY);
+
+                currentY += 41;
+                ctx.beginPath();
+                ctx.moveTo(startX, currentY);
+                ctx.lineTo(rightX, currentY);
+                ctx.lineWidth = 4; 
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
 
                 currentY += 92; 
-            });
+                
+                groups.forEach(group => {
+                    const detailRaw = group.querySelector('.detail').value || "-";
+                    const detailItem = toTitleCase(detailRaw); 
+                    const qty = group.querySelector('.qty').value || "0";
+                    const price = group.querySelector('.price').value || "0.00";
+                    const amount = group.querySelector('.amount').value || "0.00";
 
-            let totalsY = 2774; 
+                    ctx.font = "53px Arial"; 
+                    ctx.textAlign = "left";
+                    const shortDetail = detailItem.length > 45 ? detailItem.substring(0, 45) + "..." : detailItem;
+                    ctx.fillText(shortDetail, startX, currentY);
+                    
+                    ctx.textAlign = "center";
+                    ctx.fillText(qty, 1346, currentY);
+                    ctx.textAlign = "right";
+                    ctx.fillText(`RM ${parseFloat(price).toFixed(2)}`, 1856, currentY);
+                    ctx.fillText(`RM ${amount}`, rightX, currentY);
 
-            ctx.beginPath();
-            let longLineY = totalsY - 92; 
-            ctx.moveTo(startX, longLineY); 
-            ctx.lineTo(rightX, longLineY); 
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = "#333";
-            ctx.stroke();
+                    const notes = group.querySelectorAll('.note-input');
+                    notes.forEach(note => {
+                        const noteText = note.value.trim();
+                        if (noteText) {
+                            currentY += 70; 
+                            ctx.font = "48px Arial"; 
+                            ctx.textAlign = "left";
+                            
+                            const noteLine = `- ${noteText}`;
+                            const shortNote = noteLine.length > 55 ? noteLine.substring(0, 55) + "..." : noteLine;
+                            ctx.fillText(shortNote, startX + 60, currentY);
+                        }
+                    });
 
-            const total = document.getElementById('total').value || "0.00";
-            const deposit = document.getElementById('deposit').value || "0.00";
-            const balance = document.getElementById('balance').value || "0.00";
+                    currentY += 92; 
+                });
 
-            let labelTotalX = 1550;
+                let totalsY = 2774; 
 
-            ctx.font = "bold 53px Arial";
-            
-            ctx.textAlign = "left";
-            ctx.fillText("TOTAL:", labelTotalX, totalsY);
-            ctx.textAlign = "right";
-            ctx.fillText(`RM ${total}`, rightX, totalsY);
-            
-            totalsY += 92;
-            ctx.textAlign = "left";
-            ctx.fillText("DEPOSIT:", labelTotalX, totalsY);
-            ctx.textAlign = "right";
-            ctx.fillText(`RM ${parseFloat(deposit).toFixed(2)}`, rightX, totalsY);
-            
-            totalsY += 51; 
+                ctx.beginPath();
+                let longLineY = totalsY - 92; 
+                ctx.moveTo(startX, longLineY); 
+                ctx.lineTo(rightX, longLineY); 
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
 
-            ctx.beginPath();
-            ctx.moveTo(labelTotalX, totalsY); 
-            ctx.lineTo(rightX, totalsY); 
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = "#333";
-            ctx.stroke();
+                const total = document.getElementById('total').value || "0.00";
+                const deposit = document.getElementById('deposit').value || "0.00";
+                const balance = document.getElementById('balance').value || "0.00";
 
-            totalsY += 82; 
-            
-            ctx.font = "bold 69px Arial";
-            ctx.textAlign = "left";
-            ctx.fillText("BALANCE:", labelTotalX, totalsY);
-            ctx.textAlign = "right";
-            ctx.fillText(`RM ${balance}`, rightX, totalsY);
+                let labelTotalX = 1550;
 
-            totalsY += 92;
-            drawDashedLine(ctx, startX, totalsY, rightX, totalsY);
+                ctx.font = "bold 53px Arial";
+                
+                ctx.textAlign = "left";
+                ctx.fillText("TOTAL:", labelTotalX, totalsY);
+                ctx.textAlign = "right";
+                ctx.fillText(`RM ${total}`, rightX, totalsY);
+                
+                totalsY += 92;
+                ctx.textAlign = "left";
+                ctx.fillText("DEPOSIT:", labelTotalX, totalsY);
+                ctx.textAlign = "right";
+                ctx.fillText(`RM ${parseFloat(deposit).toFixed(2)}`, rightX, totalsY);
+                
+                totalsY += 51; 
 
-            const downloadBtn = document.getElementById('download-btn');
-            downloadBtn.classList.remove('hidden');
-            
-            if(window.innerWidth < 1024) {
-                setTimeout(() => {
-                    document.getElementById('receipt-canvas').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 300);
+                ctx.beginPath();
+                ctx.moveTo(labelTotalX, totalsY); 
+                ctx.lineTo(rightX, totalsY); 
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "#333";
+                ctx.stroke();
+
+                totalsY += 82; 
+                
+                ctx.font = "bold 69px Arial";
+                ctx.textAlign = "left";
+                ctx.fillText("BALANCE:", labelTotalX, totalsY);
+                ctx.textAlign = "right";
+                ctx.fillText(`RM ${balance}`, rightX, totalsY);
+
+                totalsY += 92;
+                drawDashedLine(ctx, startX, totalsY, rightX, totalsY);
+
+                // Tunjukkan Popup Modal
+                document.getElementById('receipt-modal').classList.remove('hidden');
+            };
+
+            if (bgImg.complete) {
+                renderContent();
+            } else {
+                bgImg.onload = renderContent;
+                bgImg.onerror = renderContent;
             }
         }
 
@@ -533,14 +637,35 @@
             ctx.setLineDash([]); 
         }
 
+        // DOWNLOAD OPTIMISED UNTUK IPHONE & ANDROID
         function downloadReceipt() {
             const canvas = document.getElementById('receipt-canvas');
-            const image = canvas.toDataURL("image/jpeg", 1.0);
-            
-            const link = document.createElement('a');
-            link.download = `Resit_${currentReceiptNo.replace('/', '-')}.jpg`;
-            link.href = image;
-            link.click();
+            const fileName = `Resit_${currentReceiptNo.replace('/', '-')}.jpg`;
+
+            // Pengendalian Selamat iOS / Safari / Android
+            if (navigator.userAgent.match(/(iPod|iPhone|iPad)/)) {
+                // iPhone Fallback: Guna blob/window open jika direct download disekat
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = fileName;
+                    link.href = url;
+                    
+                    // Cuba trigger click, jika disekat buka tab baru
+                    try {
+                        link.click();
+                    } catch (e) {
+                        window.open(url, '_blank');
+                    }
+                }, 'image/jpeg', 0.95);
+            } else {
+                // Android & Desktop Standard
+                const image = canvas.toDataURL("image/jpeg", 0.95);
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = image;
+                link.click();
+            }
 
             const dateVal = document.getElementById('receipt-date').value;
             const ddmmyy = getFormattedDateDDMMYY(dateVal);
